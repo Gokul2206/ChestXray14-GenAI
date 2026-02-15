@@ -1,0 +1,29 @@
+# === ChestXray14 Project ===
+
+# Raw and preprocessed dataset
+data/
+data/raw/
+
+# Model checkpoints (large files)
+checkpoints/
+
+# Training logs (optional: keep small CSVs if needed)
+logs/
+
+# Python cache and build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.pth
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VS Code settings
+.vscode/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
