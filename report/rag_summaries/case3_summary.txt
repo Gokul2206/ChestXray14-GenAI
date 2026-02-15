@@ -1,0 +1,11 @@
+Findings:
+- Suggestive evidence of Pneumonia (confidence 0.33)
+
+Context:
+- Pneumonia: Infection causing lung consolidation. [KB]. Caveats: Labels overlap with Infiltration.
+
+Limitations:
+Predictions are probabilistic, labels may contain noise, and clinical correlation is required.
+
+Disclaimer:
+This summary is assistive only and not a diagnostic report.

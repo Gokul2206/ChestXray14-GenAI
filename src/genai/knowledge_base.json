@@ -1,0 +1,86 @@
+[
+  {
+    "label": "Atelectasis",
+    "definition": "Partial or complete collapse of lung tissue.",
+    "caveats": "Labels mined from reports; often noisy and ambiguous.",
+    "limitations": "Predictions are probabilistic and not diagnostic."
+  },
+  {
+    "label": "Cardiomegaly",
+    "definition": "Enlargement of the heart.",
+    "caveats": "Dataset does not distinguish acute vs chronic cases.",
+    "limitations": "Requires clinical correlation."
+  },
+  {
+    "label": "Effusion",
+    "definition": "Fluid accumulation in the pleural space.",
+    "caveats": "Labeling may miss small effusions.",
+    "limitations": "Chest X-ray alone cannot determine etiology."
+  },
+  {
+    "label": "Infiltration",
+    "definition": "Substance (fluid, cells) entering lung tissue.",
+    "caveats": "Highly noisy label; overlaps with Pneumonia.",
+    "limitations": "Difficult to distinguish radiographically."
+  },
+  {
+    "label": "Mass",
+    "definition": "Large abnormal growth in the lung.",
+    "caveats": "Labels may not specify benign vs malignant.",
+    "limitations": "Requires biopsy or CT for confirmation."
+  },
+  {
+    "label": "Nodule",
+    "definition": "Small rounded opacity in the lung.",
+    "caveats": "Label noise common; nodules <1cm often missed.",
+    "limitations": "Chest X-ray sensitivity is limited."
+  },
+  {
+    "label": "Pneumonia",
+    "definition": "Infection causing lung consolidation.",
+    "caveats": "Labels overlap with Infiltration.",
+    "limitations": "Clinical correlation required."
+  },
+  {
+    "label": "Pneumothorax",
+    "definition": "Air in the pleural space causing lung collapse.",
+    "caveats": "Small pneumothoraces may be missed.",
+    "limitations": "Requires urgent clinical evaluation."
+  },
+  {
+    "label": "Consolidation",
+    "definition": "Region of lung filled with liquid instead of air.",
+    "caveats": "Overlaps with Pneumonia and Infiltration.",
+    "limitations": "Etiology cannot be determined by X-ray alone."
+  },
+  {
+    "label": "Edema",
+    "definition": "Fluid accumulation in lung tissue.",
+    "caveats": "Often secondary to heart failure.",
+    "limitations": "Requires correlation with clinical findings."
+  },
+  {
+    "label": "Emphysema",
+    "definition": "Chronic lung disease with alveolar destruction.",
+    "caveats": "Labels may be inconsistent.",
+    "limitations": "CT is more sensitive than X-ray."
+  },
+  {
+    "label": "Fibrosis",
+    "definition": "Scarring of lung tissue.",
+    "caveats": "Labeling may miss subtle cases.",
+    "limitations": "Requires HRCT for definitive diagnosis."
+  },
+  {
+    "label": "Pleural Thickening",
+    "definition": "Thickening of pleural lining.",
+    "caveats": "May be post-infectious or asbestos-related.",
+    "limitations": "Etiology cannot be inferred from X-ray."
+  },
+  {
+    "label": "Hernia",
+    "definition": "Protrusion of abdominal contents into thoracic cavity.",
+    "caveats": "Rare label; few examples in dataset.",
+    "limitations": "Clinical correlation required."
+  }
+]

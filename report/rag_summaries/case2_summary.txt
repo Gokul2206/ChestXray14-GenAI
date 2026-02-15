@@ -1,0 +1,11 @@
+Findings:
+- Suggestive evidence of Pleural Effusion (confidence 0.55)
+
+Context:
+- Pleural Effusion: Fluid accumulation in the pleural space. [KB]. Caveats: Labeling may miss small effusions.
+
+Limitations:
+Predictions are probabilistic, labels may contain noise, and clinical correlation is required.
+
+Disclaimer:
+This summary is assistive only and not a diagnostic report.

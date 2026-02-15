@@ -1,0 +1,11 @@
+Findings:
+- Suggestive evidence of Atelectasis (confidence 0.92)
+
+Context:
+- Atelectasis: Partial or complete collapse of lung tissue. [KB]. Caveats: Labels mined from reports; often noisy and ambiguous.
+
+Limitations:
+Predictions are probabilistic, labels may contain noise, and clinical correlation is required.
+
+Disclaimer:
+This summary is assistive only and not a diagnostic report.
