@@ -23,3 +23,7 @@ fastapi
 uvicorn[standard]
 python-multipart
 requests
+transformers
+sentencepiece
+accelerate
+faiss-cpu

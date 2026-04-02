@@ -1,11 +1,12 @@
+import os, random
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
 import torchvision.models as models
+from torch.utils.data import DataLoader, WeightedRandomSampler
 from sklearn.metrics import roc_auc_score, average_precision_score, f1_score, precision_score, recall_score
-import numpy as np
-import random, os
 
 from src.data.chestxray_dataset import ChestXrayDataset, transform
 
@@ -48,6 +49,25 @@ def build_model(name):
     return model
 
 # -------------------
+# Focal Loss
+# -------------------
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=None, gamma=2.0, reduction="mean"):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.reduction = reduction
+
+    def forward(self, inputs, targets):
+        bce_loss = nn.functional.binary_cross_entropy_with_logits(inputs, targets, reduction="none")
+        pt = torch.exp(-bce_loss)
+        if self.alpha is not None:
+            focal_loss = self.alpha * (1 - pt) ** self.gamma * bce_loss
+        else:
+            focal_loss = (1 - pt) ** self.gamma * bce_loss
+        return focal_loss.mean() if self.reduction == "mean" else focal_loss.sum()
+
+# -------------------
 # Training loop
 # -------------------
 def train_one_epoch(epoch, model, train_loader, criterion, optimizer, device, scaler):
@@ -69,16 +89,28 @@ def train_one_epoch(epoch, model, train_loader, criterion, optimizer, device, sc
     print(f"Epoch {epoch} - Train Loss: {total_loss/len(train_loader):.4f}")
 
 # -------------------
-# Evaluation
+# Evaluation + Threshold tuning
 # -------------------
-def evaluate(model, loader, device, label_columns, split="Val", threshold=0.5):
+def tune_thresholds(y_true, y_probs, step=0.01):
+    num_classes = y_true.shape[1]
+    thresholds = []
+    for c in range(num_classes):
+        best_f1, best_t = 0, 0.5
+        for t in np.arange(0, 1, step):
+            preds = (y_probs[:, c] >= t).astype(int)
+            f1 = f1_score(y_true[:, c], preds, average="binary", zero_division=0)
+            if f1 > best_f1:
+                best_f1, best_t = f1, t
+        thresholds.append(best_t)
+    return thresholds
+
+def evaluate(model, loader, device, label_columns, split="Val", thresholds=None):
     model.eval()
     all_labels, all_outputs = [], []
     with torch.no_grad():
         for images, labels in loader:
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
-
             all_labels.append(labels.cpu())
             all_outputs.append(outputs.cpu())
 
@@ -95,7 +127,12 @@ def evaluate(model, loader, device, label_columns, split="Val", threshold=0.5):
             print(f"{disease}: skipped (no positive samples in {split} set)")
 
     # Thresholded metrics
-    preds = (all_outputs >= threshold).astype(int)
+    if thresholds is None:
+        thresholds = [0.5] * all_labels.shape[1]
+    preds = np.zeros_like(all_outputs, dtype=int)
+    for i in range(all_labels.shape[1]):
+        preds[:, i] = (all_outputs[:, i] >= thresholds[i]).astype(int)
+
     micro_f1 = f1_score(all_labels, preds, average="micro", zero_division=0)
     macro_f1 = f1_score(all_labels, preds, average="macro", zero_division=0)
     micro_prec = precision_score(all_labels, preds, average="micro", zero_division=0)
@@ -105,45 +142,66 @@ def evaluate(model, loader, device, label_columns, split="Val", threshold=0.5):
     print(f"Micro F1={micro_f1:.3f}, Macro F1={macro_f1:.3f}")
     print(f"Micro Precision={micro_prec:.3f}, Micro Recall={micro_rec:.3f}")
 
+    return all_labels, all_outputs
+
 # -------------------
 # Main
 # -------------------
-def main():
+def main(use_focal=False, use_sampler=True):
     # Load datasets
     train_dataset = ChestXrayDataset("data/processed/train.csv", transform=transform)
     val_dataset   = ChestXrayDataset("data/processed/val.csv", transform=transform)
     test_dataset  = ChestXrayDataset("data/processed/test.csv", transform=transform)
 
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=0)
-    val_loader   = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=0)
-    test_loader  = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=0)
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Using device:", device)
-    if device.type == "cuda":
-        print("GPU name:", torch.cuda.get_device_name(0))
 
-    # Train all three models
+    # Compute pos_weight
+    train_df = pd.read_csv("data/processed/train.csv")
+    label_columns = train_dataset.label_columns
+    pos_counts = train_df[label_columns].sum().values
+    neg_counts = len(train_df) - pos_counts
+    pos_weight = torch.tensor(neg_counts / (pos_counts + 1e-8), dtype=torch.float).to(device)
+
+    # Balanced sampler
+    if use_sampler:
+        sample_weights = []
+        for _, row in train_df[label_columns].iterrows():
+            weight = (row.values * (neg_counts / (pos_counts + 1e-8))).sum()
+            sample_weights.append(weight)
+        sampler = WeightedRandomSampler(sample_weights, num_samples=len(sample_weights), replacement=True)
+        train_loader = DataLoader(train_dataset, batch_size=32, sampler=sampler)
+    else:
+        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+    val_loader   = DataLoader(val_dataset, batch_size=32, shuffle=False)
+    test_loader  = DataLoader(test_dataset, batch_size=32, shuffle=False)
+
+    # Train all models
     for model_name in ["resnet18", "vgg19", "customcnn"]:
         print(f"\n=== Training {model_name.upper()} ===")
         model = build_model(model_name).to(device)
 
-        criterion = nn.BCEWithLogitsLoss()
+        criterion = FocalLoss(alpha=pos_weight, gamma=2.0) if use_focal else nn.BCEWithLogitsLoss(pos_weight=pos_weight)
         optimizer = optim.Adam(model.parameters(), lr=1e-4)
         scaler = torch.cuda.amp.GradScaler(enabled=(device.type == "cuda"))
 
         os.makedirs(f"checkpoints/{model_name}", exist_ok=True)
 
-        for epoch in range(1, 11):  # 10 epochs
+        for epoch in range(1, 11):
             train_one_epoch(epoch, model, train_loader, criterion, optimizer, device, scaler)
-            evaluate(model, val_loader, device, train_dataset.label_columns, split="Val")
+            evaluate(model, val_loader, device, label_columns, split="Val")
 
             ckpt_path = f"checkpoints/{model_name}/epoch{epoch}.pth"
             torch.save(model.state_dict(), ckpt_path)
             print(f"Saved checkpoint: {ckpt_path}")
 
-        # Final test evaluation
-        evaluate(model, test_loader, device, train_dataset.label_columns, split="Test")
+        # Threshold tuning on validation set
+        y_true, y_probs = evaluate(model, val_loader, device, label_columns, split="Val")
+        tuned_thresholds = tune_thresholds(y_true, y_probs)
+
+        # Final test evaluation with tuned thresholds
+        evaluate(model, test_loader, device, label_columns, split="Test", thresholds=tuned_thresholds)
 
 if __name__ == "__main__":
-    main()
+    main(use_focal=False, use_sampler=True)
