@@ -1,29 +1,46 @@
+# Core deep learning
 torch
 torchvision
 timm
+
+# Data handling
 pandas
 numpy
 scikit-learn
+
+# Image preprocessing
 albumentations
 opencv-python
 pillow
 pydicom
+
+# Utilities
 tqdm
 matplotlib
 seaborn
+
+# Metrics & helpers
 torchmetrics
 einops
+
+# Vector search & embeddings
 faiss-cpu
 sentence-transformers
 transformers
+sentencepiece
 accelerate
+
+# Experiment tracking
 mlflow
 wandb
+
+# API & deployment
 fastapi
 uvicorn[standard]
 python-multipart
 requests
-transformers
-sentencepiece
-accelerate
-faiss-cpu
+
+# GenAI / RAG layer
+langchain
+langchain-google-genai
+python-dotenv

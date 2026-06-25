@@ -1,14 +1,21 @@
 # === ChestXray14 Project ===
 
-# Raw and preprocessed dataset
-data/
+# Raw and preprocessed dataset (large files not tracked)
+data/images/
+data/PROCESSED/
 data/raw/
 
 # Model checkpoints (large files)
 checkpoints/
 
 # Training logs (optional: keep small CSVs if needed)
-logs/
+logs/*.csv
+logs/*.json
+
+# Reports and generated outputs
+# report/final_report.pdf
+report/figures/
+notebooks/*.json
 
 # Python cache and build artifacts
 __pycache__/
@@ -27,3 +34,13 @@ __pycache__/
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# Environment and secrets
+.env
+
+# Experiment tracking (local artifacts)
+mlruns/
+wandb/
+
+# Miscellaneous
+*.log
