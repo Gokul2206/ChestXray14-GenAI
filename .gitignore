@@ -4,7 +4,11 @@
 data/images/
 data/PROCESSED/
 data/raw/
-
+# Reports and generated outputs
+report/figures/
+report/rag_summaries/
+# Keep final report
+!report/final_report.pdf
 # Model checkpoints (large files)
 checkpoints/
 
